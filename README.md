@@ -15,7 +15,7 @@ It is for clinical geneticists and biologists who need a quick answer without in
 
 1. **Download** the program from the Releases page: `FoldShift_v0.5.3_windows_x64.exe` for Windows (a macOS Apple Silicon build is made by the GitHub workflow). No other software is needed.
 2. **Double-click it.** Your browser opens the FoldShift page. Windows SmartScreen or macOS Gatekeeper may warn on first start because the program is unsigned; choose "Run anyway".
-3. **Try it with the sample files** in the `test/data/` folder of the repository (open data, see `test/data/README.md`): open the **Compare** tab, drop `hba1_ref.zip` in **Reference** and `hba1_del_hinge.zip` in **Case**, and press **Compare**. The result opens in about a second.
+3. **Try it with the sample files** in the `test/data/` folder of the repository (open data, see `test/data/README.md`): open the **Compare** tab, drop `fold_hba_reference.zip` in **Reference** and `fold_hba_case.zip` in **Case** (human HBA1 and its variant `c.179G>A`, p.Gly60Asp), and press **Compare**. The result opens in about a second.
 4. **Close the browser tab** to quit. Your comparison history is deleted when the program closes.
 
 ## The four steps

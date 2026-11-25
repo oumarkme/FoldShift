@@ -243,3 +243,20 @@ fn open_pdb_pair_without_confidence() {
     // point mutants of the same fold: almost identical backbones
     assert!(cmp.stats.fit_rmsd < 0.5 && cmp.stats.fit_residues > 150);
 }
+
+#[test]
+fn alphafold_server_hba1_g60d() {
+    // real AlphaFold Server results: HBA1 reference and the case c.179G>A (p.Gly60Asp), five models each
+    let (r, c) = (zip("fold_hba_reference.zip"), zip("fold_hba_case.zip"));
+    assert_eq!(
+        (r.source.as_str(), r.sequence.len(), r.models.len()),
+        ("AlphaFold Server", 142, 5)
+    );
+    assert_eq!(substituted_residues(&r.sequence, &c.sequence), vec![60]);
+    assert!(r.models[r.best()].pae.is_some() && c.models[c.best()].pae.is_some());
+    let cmp = compare(&r, &c, &Options::default()).unwrap();
+    // one substitution in a well-folded helical protein: one block, nearly identical backbones
+    assert!(cmp.missing_in_case.is_empty() && cmp.blocks.len() == 1);
+    assert!(cmp.stats.fit_rmsd < 0.5 && cmp.stats.fit_residues > 130);
+    assert!(cmp.stats.lddt_ca > 0.98);
+}
