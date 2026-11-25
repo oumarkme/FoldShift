@@ -155,6 +155,22 @@ pub struct Camera {
 
 /// View: 0 = widest face (automatic), 1 = turned 90 degrees about the vertical axis, 2 = turned about the horizontal axis.
 pub fn camera(c: &Comparison, width: usize, st: &Style) -> Camera {
+    let (mut axes, center, pts) = base_view(c, st);
+    if st.yaw != 0.0 || st.pitch != 0.0 {
+        let (sy, cy) = st.yaw.to_radians().sin_cos();
+        let (sp, cp) = st.pitch.to_radians().sin_cos();
+        let (x, y, z) = (axes[0], axes[1], axes[2]);
+        let x2 = add(mul(x, cy), mul(z, -sy));
+        let z2 = add(mul(x, sy), mul(z, cy));
+        let y2 = add(mul(y, cp), mul(z2, sp));
+        let z3 = add(mul(z2, cp), mul(y, -sp));
+        axes = [x2, y2, z3];
+    }
+    fit_camera(axes, center, &pts, width, st.zoom)
+}
+
+/// Axes (before yaw and pitch), center and the points that set the frame.
+fn base_view(c: &Comparison, st: &Style) -> ([V3; 3], V3, Vec<V3>) {
     let in_focus = focus_mask(c, &st.focus);
     let mut pts: Vec<V3> = Vec::new();
     let mut all: Vec<V3> = Vec::new();
@@ -180,19 +196,13 @@ pub fn camera(c: &Comparison, width: usize, st: &Style) -> Camera {
         2 => axes = [axes[0], axes[2], mul(axes[1], -1.0)],
         _ => {}
     }
-    if st.yaw != 0.0 || st.pitch != 0.0 {
-        let (sy, cy) = st.yaw.to_radians().sin_cos();
-        let (sp, cp) = st.pitch.to_radians().sin_cos();
-        let (x, y, z) = (axes[0], axes[1], axes[2]);
-        let x2 = add(mul(x, cy), mul(z, -sy));
-        let z2 = add(mul(x, sy), mul(z, cy));
-        let y2 = add(mul(y, cp), mul(z2, sp));
-        let z3 = add(mul(z2, cp), mul(y, -sp));
-        axes = [x2, y2, z3];
-    }
     let center = pts
         .iter()
         .fold([0.0; 3], |a, p| add(a, mul(*p, 1.0 / pts.len() as f32)));
+    (axes, center, pts)
+}
+
+fn fit_camera(axes: [V3; 3], center: V3, pts: &[V3], width: usize, zoom: f32) -> Camera {
     let proj: Vec<[f32; 2]> = pts
         .iter()
         .map(|p| {
@@ -212,14 +222,21 @@ pub fn camera(c: &Comparison, width: usize, st: &Style) -> Camera {
     let scale = width as f32 / bw;
     let h = ((bh * scale).round() as usize).clamp(width / 3, width * 3 / 2);
     // fit height too if the clamp shrank it
-    let scale = scale.min(h as f32 / bh) * st.zoom.max(0.1);
+    let fit = scale.min(h as f32 / bh);
+    let scale = fit * zoom.max(0.1);
+    // a zoom keeps the middle of the frame in place (zoom 1 leaves the frame untouched)
+    let mut minxy = [lo[0] - pad, lo[1] - pad];
+    if zoom != 1.0 {
+        minxy[0] += width as f32 / 2.0 * (1.0 / fit - 1.0 / scale);
+        minxy[1] += h as f32 / 2.0 * (1.0 / fit - 1.0 / scale);
+    }
     Camera {
         axes,
         center,
         scale,
         w: width,
         h,
-        minxy: [lo[0] - pad, lo[1] - pad],
+        minxy,
     }
 }
 
@@ -431,5 +448,43 @@ pub fn render(c: &Comparison, cam: &Camera, kind: Kind, st: &Style) -> Image {
         f.img
     } else {
         f.img.downsample(ss)
+    }
+}
+
+/// What the page needs to turn the structure at full frame rate while the mouse is down:
+/// the same axes, frame and colors as the server picture (drawn as a thin trace).
+pub struct ViewData {
+    pub axes: [V3; 3],
+    pub center: V3,
+    /// (C-alpha, colors, opacity, chain breaks, in the frame) for the reference, then the case.
+    pub chains: Vec<ViewChain>,
+}
+
+pub struct ViewChain {
+    pub ca: Vec<V3>,
+    pub col: Vec<[u8; 3]>,
+    pub alpha: Vec<f32>,
+    pub breaks: Vec<bool>,
+    pub framed: Vec<bool>,
+}
+
+pub fn view_data(c: &Comparison, kind: Kind, st: &Style) -> ViewData {
+    let (axes, center, _) = base_view(c, st);
+    let mask = focus_mask(c, &st.focus);
+    let (rc, cc) = chains(c, kind, st);
+    let mk = |ch: Chain, m: Option<&Vec<bool>>| ViewChain {
+        framed: (0..ch.ca.len()).map(|i| m.is_none_or(|m| m[i])).collect(),
+        ca: ch.ca,
+        col: ch.col,
+        alpha: ch.alpha,
+        breaks: ch.breaks,
+    };
+    ViewData {
+        axes,
+        center,
+        chains: vec![
+            mk(rc, mask.as_ref().map(|m| &m.0)),
+            mk(cc, mask.as_ref().map(|m| &m.1)),
+        ],
     }
 }

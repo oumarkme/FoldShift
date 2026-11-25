@@ -1,12 +1,12 @@
 # FoldShift
 
-[![Release](https://img.shields.io/badge/release-v0.5.3-0072B2)](https://github.com/oumarkme/FoldShift/releases)
+[![Release](https://img.shields.io/badge/release-v0.6.0-0072B2)](https://github.com/oumarkme/FoldShift/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24522813.svg)](https://doi.org/10.5281/zenodo.24522813)
 [![License: MIT](https://img.shields.io/badge/license-MIT-009E73)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20x64%20%7C%20Windows%20ARM64%20%7C%20macOS%20ARM64-555555)](https://github.com/oumarkme/FoldShift/releases)
 [![Build](https://github.com/oumarkme/FoldShift/actions/workflows/release.yml/badge.svg)](https://github.com/oumarkme/FoldShift/actions/workflows/release.yml)
 
-**See what a variant does to a predicted protein structure.** Version 0.5.3 · MIT license · Status: stable for daily use, Windows exe tested; macOS build and native window not tested yet.
+**See what a variant does to a predicted protein structure.** Version 0.6.0 · MIT license · Status: stable for daily use, Windows exe tested; macOS build and native window not tested yet.
 
 FoldShift compares two predicted structures of the same protein, a reference and a case (for example a patient variant). It lines them up, measures how far each residue moved, and draws four figures ready for a paper (88 mm wide, 600 dpi JPEG). It also prepares the reference and case protein sequences you paste into AlphaFold Server. It never predicts structures itself.
 
@@ -14,7 +14,7 @@ It is for clinical geneticists and biologists who need a quick answer without in
 
 ## Get started
 
-1. **Download** the program from the Releases page: `FoldShift_v0.5.3_windows_x64.exe` for Windows (a macOS Apple Silicon build is made by the GitHub workflow). No other software is needed.
+1. **Download** the program from the Releases page: `FoldShift_v0.6.0_windows_x64.exe` for Windows (a macOS Apple Silicon build is made by the GitHub workflow). No other software is needed.
 2. **Double-click it.** Your browser opens the FoldShift page. Windows SmartScreen or macOS Gatekeeper may warn on first start because the program is unsigned; choose "Run anyway".
 3. **Try it with the sample files** in the `test/data/` folder of the repository (open data, see `test/data/README.md`): open the **Compare** tab, drop `fold_hba_reference.zip` in **Reference** and `fold_hba_case.zip` in **Case** (human HBA1 and its variant `c.179G>A`, p.Gly60Asp), and press **Compare**. The result opens in about a second: RMSD 0.23 Å, median shift 0.14 Å, no residue moved over 5 Å, lDDT 0.99. The one substitution (Gly60Asp) barely moves the backbone, so the page reports that the case is very similar to the reference.
 4. **Close the browser tab** to quit. Your comparison history is deleted when the program closes.
@@ -48,7 +48,7 @@ The page has four tabs. Work from left to right. **Reset all** (top right) delet
 
 - **Figures:** the four figures, each with its own **Download JPEG** button: reference and case, distance to reference, case confidence (pLDDT), and distance along the sequence. The **Distance table (CSV)** button saves the per-residue table. The **Summary** list explains the result in plain words.
 - **Regions:** the aligned blocks with their RMSD alone and after the global fit. One click lines the structures up on a block, and "Automatic alignment" goes back.
-- **Rotate:** drag to rotate and scroll to zoom; **Use in figures** redraws the four figures from this view.
+- **Rotate:** drag to rotate (the molecule turns as a fast outline while the mouse is down, then the full picture is drawn) and use the **+** and **−** buttons to zoom; **Use in figures** redraws the four figures from this view.
 - **Residues:** marked residues (your variants are marked automatically after step 1) and helix or strand changes.
 - **Quality:** ranking score, pTM, mean pLDDT, and the noise between the reference's own models. A difference counts only if it is clearly larger than this noise.
 - The run folder also holds `model_robustness.csv`, `summary.txt`, `summary.json`, and `case_aligned_to_reference.cif` (or `.pdb`).

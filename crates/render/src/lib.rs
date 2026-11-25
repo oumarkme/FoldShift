@@ -6,4 +6,4 @@ pub mod ribbon;
 pub mod scene;
 pub use figure::{encode_jpeg, figure, profile_figure, PREVIEW_DPI, PRINT_DPI};
 pub use raster::Image;
-pub use scene::{Kind, Style};
+pub use scene::{view_data, Kind, Style};

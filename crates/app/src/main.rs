@@ -9,7 +9,9 @@ use psplot_core::compare::{
 use psplot_core::structure::{load_any, transform_cif, transform_pdb};
 use psplot_core::transcript::{from_sequence, get_transcript};
 use psplot_core::variants::apply_variants;
-use psplot_render::{encode_jpeg, figure, profile_figure, Kind, Style, PREVIEW_DPI, PRINT_DPI};
+use psplot_render::{
+    encode_jpeg, figure, profile_figure, view_data, Kind, Style, PREVIEW_DPI, PRINT_DPI,
+};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::io::Cursor;
@@ -488,6 +490,8 @@ fn view_response(st: &State, q: &str) -> Response<Cursor<Vec<u8>>> {
     };
     let dpi = if query_param(q, "dl").is_some() {
         PRINT_DPI
+    } else if query_param(q, "fast").is_some() {
+        PREVIEW_DPI / 3.0
     } else {
         PREVIEW_DPI
     };
@@ -510,6 +514,37 @@ fn view_response(st: &State, q: &str) -> Response<Cursor<Vec<u8>>> {
         );
     }
     r
+}
+
+/// Coordinates, colors and the camera of a run, for the page's own fast rotation.
+fn viewdata_response(st: &State, q: &str) -> Response<Cursor<Vec<u8>>> {
+    let id = query_param(q, "job").unwrap_or_default();
+    let cp = match comparison_of(st, &id) {
+        Ok(v) => v,
+        Err(e) => return err(404, &e),
+    };
+    let kind = match query_param(q, "kind").as_deref() {
+        Some("distance") => Kind::Distance,
+        Some("plddt") => Kind::Plddt,
+        _ => Kind::Overlay,
+    };
+    let d = view_data(&cp.0, kind, &cp.1.style);
+    let r1 = |x: f32| (x * 100.0).round() / 100.0;
+    let chains: Vec<Value> = d
+        .chains
+        .iter()
+        .map(|c| {
+            json!({
+                "ca": c.ca.iter().flat_map(|p| [r1(p[0]), r1(p[1]), r1(p[2])]).collect::<Vec<_>>(),
+                "col": c.col.iter().map(|k| format!("#{:02x}{:02x}{:02x}", k[0], k[1], k[2])).collect::<Vec<_>>(),
+                "alpha": c.alpha, "breaks": c.breaks, "framed": c.framed,
+            })
+        })
+        .collect();
+    let body = json!({"axes": d.axes, "center": d.center, "chains": chains, "yaw": cp.1.style.yaw, "pitch": cp.1.style.pitch});
+    Response::from_data(body.to_string())
+        .with_status_code(200)
+        .with_header(Header::from_bytes("Content-Type", "application/json").unwrap())
 }
 
 /// Earlier runs, newest first, for the History list.
@@ -883,6 +918,7 @@ fn handle(st: &Arc<State>, mut req: Request) {
         }
         (Method::Post, "/api/reset") => reset(st),
         (Method::Get, "/api/history") => json_resp(200, history(st)),
+        (Method::Get, "/api/viewdata") => viewdata_response(st, &query),
         (Method::Get, "/api/view") => view_response(st, &query),
         (Method::Post, "/api/sequence") => sequence(st, &body),
         (Method::Post, "/api/compare") => compare_start(st, &body, &ctype),
