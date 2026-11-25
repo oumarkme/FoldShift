@@ -1,7 +1,7 @@
 # FoldShift
 
 [![Release](https://img.shields.io/badge/release-v0.5.3-0072B2)](https://github.com/oumarkme/FoldShift/releases)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24522814.svg)](https://doi.org/10.5281/zenodo.24522814)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24523850.svg)](https://doi.org/10.5281/zenodo.24523850)
 [![License: MIT](https://img.shields.io/badge/license-MIT-009E73)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20x64%20%7C%20Windows%20ARM64%20%7C%20macOS%20ARM64-555555)](https://github.com/oumarkme/FoldShift/releases)
 [![Build](https://github.com/oumarkme/FoldShift/actions/workflows/release.yml/badge.svg)](https://github.com/oumarkme/FoldShift/actions/workflows/release.yml)
@@ -92,7 +92,7 @@ The Rust toolchain is pinned in `rust-toolchain.toml`. macOS is built by `.githu
 
 If you use FoldShift, please cite it:
 
-> Ou, J.-H. (2026). *FoldShift* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24522814
+> Ou, J.-H. (2026). *FoldShift* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24523850
 
 GitHub's "Cite this repository" button reads `CITATION.cff` and gives the same reference in APA and BibTeX.
 
