@@ -13,7 +13,8 @@ fn reference_protein() {
     let t = tx();
     assert_eq!(t.accession, "NM_000558.5");
     assert_eq!(t.gene, "HBA1");
-    assert_eq!(t.protein.len(), 142);
+    // the UniProt P69905 sequence, which RefSeq and Ensembl (ENST00000320868.9) translate to as well
+    assert_eq!(t.protein, "MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKYR");
     assert_eq!(
         psplot_core::variants::translate(&t.mrna, t.cds_start).0,
         t.protein

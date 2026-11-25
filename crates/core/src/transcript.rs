@@ -353,7 +353,7 @@ pub fn get_transcript(accession: &str, cache: &Path) -> Result<Transcript, Varia
     }
     if !is_accession(acc) {
         return err(format!(
-            "'{acc}' is not recognized. Use a RefSeq transcript (NM_000558.5), an Ensembl transcript (ENST00000320868) or a UniProt accession (P69905)."
+            "'{acc}' is not recognized. Use a RefSeq transcript (NM_000558.5), an Ensembl transcript (ENST00000320868.9) or a UniProt accession (P69905)."
         ));
     }
     let gb: PathBuf = cache.join(format!("{acc}.gb"));
