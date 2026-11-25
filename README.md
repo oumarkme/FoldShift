@@ -24,12 +24,16 @@ The page has four tabs. Work from left to right. **Reset all** (top right) delet
 
 **1. Sequences** (folded by default; skip it if you already have the sequences)
 
+![Sequences tab: transcript or protein ID and the variants of the case](docs/img/foldshift_1_sequences.png)
+
 - Enter a RefSeq transcript (`NM_000558.5`), an Ensembl transcript (`ENST00000320868.9`), or a UniProt accession (`P69905`; protein variants only). You can paste a DNA or protein sequence instead.
 - Enter the case variants: `c.179G>A`, `c.1A>G`, or `p.Val56_Lys62del`.
 - Copy the reference and case proteins into AlphaFold Server and run them as two jobs. Download both result zips and do not unzip them.
 - Not supported yet: intron or untranslated region (UTR) positions, protein frameshifts, and gene symbols.
 
 **2. Compare**
+
+![Compare tab: drop the reference and the case, then press Compare](docs/img/foldshift_2_compare.png)
 
 - Drop the reference and one or more cases. Each can be an AlphaFold Server zip, or a `.cif` or `.pdb` file from any tool (ColabFold, ESMFold, Boltz, Chai-1, the AlphaFold database, or an experimental structure). Several cases are compared with the same reference.
 - Optional: drop a predicted aligned error (PAE) file (`.json`, `.npy`, or `.npz`) next to its structure. FoldShift pairs it by file name and reports the mean PAE. Pickle files are refused because opening one can run code.
@@ -38,6 +42,8 @@ The page has four tabs. Work from left to right. **Reset all** (top right) delet
 - Press **Compare**. A zip uses its best-ranked model; a plain file is used as it is.
 
 **3. Results** (one block per case; a verdict and four numbers on top: root-mean-square deviation (RMSD), median shift, share of residues moved over 5 Å, lDDT)
+
+![Results tab: verdict, key numbers, and the four figures with download buttons](docs/img/foldshift_3_results.png)
 
 - **Figures:** the four figures, each with its own **Download JPEG** button: reference and case, distance to reference, case confidence (pLDDT), and distance along the sequence. The **Distance table (CSV)** button saves the per-residue table. The **Summary** list explains the result in plain words.
 - **Regions:** the aligned blocks with their RMSD alone and after the global fit. One click lines the structures up on a block, and "Automatic alignment" goes back.
