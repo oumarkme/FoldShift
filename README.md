@@ -88,6 +88,14 @@ All code is written for this project. We chose the features by reading what PyMO
 
 The Rust toolchain is pinned in `rust-toolchain.toml`. macOS is built by `.github/workflows/release.yml` on a GitHub macOS runner. Report bugs or ask questions in the project's issue tracker.
 
+## Citation
+
+If you use FoldShift, please cite it:
+
+> Ou, J.-H. (2026). *FoldShift* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24522814
+
+GitHub's "Cite this repository" button reads `CITATION.cff` and gives the same reference in APA and BibTeX.
+
 ## License
 
 MIT, see `LICENSE`. Copyright 2026 Jen-Hsiang Ou.
