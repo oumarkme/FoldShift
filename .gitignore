@@ -1,0 +1,20 @@
+# Build output
+target/
+dist/
+build/
+
+# Runtime data and caches
+runs/
+cache/
+
+# Local container builds and sample data
+container/
+*.sif
+*.def
+examples/data/
+example/
+
+# Editor, Python and local notes
+__pycache__/
+*.pyc
+.pytest_cache/

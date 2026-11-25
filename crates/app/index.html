@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FoldShift</title>
+<style>
+:root{color-scheme:light;--ink:#1c1c1c;--mute:#666;--line:#e0e0e0;--bg:#f6f7f9;--acc:#0072B2;--accbg:#eaf3fa;--warn:#D55E00;--ok:#009E73;--case:#E69F00}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,Segoe UI,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.bar{max-width:980px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.reset{margin-left:auto;padding:6px 12px;font-size:13px}.brand{font-weight:700;font-size:16px;padding:12px 0}.brand span{font-weight:400;color:var(--mute);font-size:12px;margin-left:6px}
+nav{display:flex;gap:2px}nav button{background:none;border:0;border-bottom:3px solid transparent;border-radius:0;color:var(--mute);padding:14px 14px 11px;font:inherit;cursor:pointer}
+nav button b{display:inline-block;width:20px;height:20px;line-height:20px;border-radius:50%;background:#e6e6e6;color:#555;font-size:12px;text-align:center;margin-right:6px}
+nav button.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}nav button.on b{background:var(--acc);color:#fff}
+nav button.done b{background:var(--ok);color:#fff}nav button:disabled{opacity:.4;cursor:not-allowed}nav small{color:var(--mute);font-weight:400;margin-left:4px}
+main{max-width:980px;margin:0 auto;padding:20px 16px 50px}
+.panel{display:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px 24px}.panel.on{display:block}
+h2{margin:0 0 14px;font-size:19px}h3{margin:18px 0 8px;font-size:16px}h4{margin:16px 0 6px;font-size:14px}
+label{display:block;font-weight:600;margin:14px 0 4px;font-size:14px}.hint{color:var(--mute);font-size:13px;font-weight:400}
+input[type=text],textarea,select{width:100%;padding:8px 10px;border:1px solid #bdbdbd;border-radius:6px;font:inherit;background:#fff}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--acc);outline-offset:-1px;border-color:var(--acc)}
+textarea{min-height:70px;resize:vertical}
+button{font:inherit;padding:8px 16px;border-radius:6px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer}
+button.sec{background:#fff;color:var(--acc)}button:disabled{opacity:.45;cursor:not-allowed}button.big{font-size:16px;padding:11px 32px}
+.row{display:flex;gap:14px;flex-wrap:wrap}.row>*{flex:1 1 220px}
+.drop{display:block;border:2px dashed #bdbdbd;border-radius:10px;padding:22px 12px;text-align:center;cursor:pointer;background:#fcfcfc;font-weight:400;margin:0}
+.drop:hover,.drop.over{border-color:var(--acc);background:var(--accbg)}.drop.has{border-style:solid;border-color:var(--ok);background:#f1faf6}
+.drop input{display:none}.drop b{display:block;font-size:15px}.drop .nm{color:var(--mute);font-size:13px;word-break:break-all}.drop.has .nm{color:var(--ink)}
+details>summary{cursor:pointer;color:var(--acc);margin:12px 0;list-style:none}details>summary::before{content:"\25B8  "}details[open]>summary::before{content:"\25BE  "}
+details>summary::-webkit-details-marker{display:none}
+.opts{border:1px solid var(--line);border-radius:8px;padding:2px 16px 14px;background:#fcfcfc}
+.opts h4{color:var(--mute);text-transform:uppercase;letter-spacing:.04em;font-size:12px;margin:14px 0 0}
+.opts label{font-weight:500;margin:8px 0 3px}
+.act{display:flex;align-items:center;gap:14px;margin-top:18px;flex-wrap:wrap}.msg{color:var(--mute);font-size:13px}
+.err{color:#fff;background:var(--warn);padding:8px 12px;border-radius:6px;margin:10px 0}
+.note{background:#fff7e6;border-left:4px solid var(--case);padding:6px 10px;margin:8px 0;font-size:13px}
+.seqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:14px}
+.seqs>div{border:1px solid var(--line);border-radius:8px;padding:10px 12px}.seqs header,.seqhead{display:flex;justify-content:space-between;align-items:center;position:static;border:0;padding:0 0 6px;background:none;font-weight:600}
+pre.seq{background:#f4f4f4;border-radius:6px;padding:8px;white-space:pre-wrap;word-break:break-all;font:12.5px/1.4 ui-monospace,Consolas,monospace;margin:0;max-height:200px;overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}th{color:var(--mute);font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:8px 0 12px}.tile{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.tile b{display:block;font-size:24px;line-height:1.25}.tile span{color:var(--mute);font-size:12px}
+.verdict{background:var(--accbg);border-left:4px solid var(--acc);padding:8px 12px;border-radius:4px}
+.subtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:18px 0 14px;flex-wrap:wrap}
+.subtabs button{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--mute);padding:8px 14px}.subtabs button.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+.pane{display:none}.pane.on{display:block}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.figs figure{margin:0;border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.figs img{max-width:100%;display:block}.figs figcaption{font-size:13px;color:var(--mute)}
+.cases{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.cases button{background:#fff;color:var(--ink);border-color:var(--line)}.cases button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.case{display:none}.case.on{display:block}
+.viewer{position:relative;display:inline-block;max-width:100%;border:1px solid var(--line);border-radius:6px}.viewer img{display:block;cursor:grab;user-select:none;-webkit-user-drag:none;max-width:100%}
+.viewer.busy::after{content:'drawing...';position:absolute;top:6px;right:8px;color:var(--mute);font-size:12px}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.tools select{width:auto}
+.empty{color:var(--mute);padding:24px 0;text-align:center}
+@media(max-width:640px){.panel{padding:16px}nav button{padding:12px 8px 9px}nav small{display:none}}
+</style></head><body>
+<header><div class="bar"><div class="brand">FoldShift<span id="ver"></span></div>
+<nav id="nav"><button data-n="1"><b>1</b>Sequences<small>(optional)</small></button><button data-n="2" class="on"><b>2</b>Compare</button><button data-n="3" disabled><b>3</b>Results</button><button data-n="4"><b>4</b>History</button></nav><button class="sec reset" id="resetAll" title="Forget all comparisons, results and entries, and start clean.">Reset all</button></div></header>
+<main>
+
+<section class="panel" id="s1"><h2>Sequences for AlphaFold Server</h2>
+<label for="tx">Transcript or protein ID</label><input type="text" id="tx" placeholder="NM_000558.5, ENST00000320868 or P69905">
+<details><summary>Paste a sequence instead</summary><textarea id="own" placeholder=">name&#10;ATGGCC... or protein"></textarea></details>
+<label for="vs">Variants of the case</label><textarea id="vs" placeholder="c.166_186del"></textarea>
+<div class="hint">One per line. c. or p. notation; UniProt IDs take p. only.</div>
+<div class="act"><button id="goSeq">Get sequences</button><span class="msg" id="seqMsg"></span></div>
+<div id="seqErr"></div><div id="seqOut"></div></section>
+
+<section class="panel on" id="s2"><h2>Compare two structures</h2><div class="hint">AlphaFold Server zip, or a .cif or .pdb file. Optional: add its PAE file (.json, .npy, .npz) in the same box.</div>
+<div class="row"><div><label class="drop" id="dz1" for="rz"><b>Reference</b><span class="nm" id="n1">Drop or click</span><input type="file" id="rz" accept=".zip,.cif,.mmcif,.pdb,.ent,.json,.npy,.npz" multiple></label></div>
+<div><label class="drop" id="dz2" for="cz"><b>Case</b><span class="nm" id="n2">Drop or click (one or more)</span><input type="file" id="cz" accept=".zip,.cif,.mmcif,.pdb,.ent,.json,.npy,.npz" multiple></label></div></div>
+<div class="row"><div><label for="ch" title="For files with several chains: the chain letters to compare. Empty uses every chain.">Chains</label><input type="text" id="ch" placeholder="All chains"></div>
+<div><label for="fr">Align on residues</label><input type="text" id="fr" placeholder="Automatic"></div></div>
+<div class="hint">Chains: for example A or A, B (author letters; used for both files). Align on residues: for example 1-210, 250. Leave both empty for automatic.</div>
+<details><summary>Options</summary><div class="opts">
+<h4>Alignment</h4><div class="row"><div><label for="plddt" title="Residues below this AlphaFold confidence (0-100) are ignored when lining up.">Minimum pLDDT</label><input type="text" id="plddt" value="70"></div>
+<div><label for="cut" title="Residues still farther apart than this after lining up are left out of the alignment.">Tolerance (&Aring;)</label><input type="text" id="cut" value="2"></div>
+<div><label for="pair" title="How residues of the two sequences are matched.">Matching</label><select id="pair"><option value="blosum">By similarity (BLOSUM62)</option><option value="identity">Identical only</option></select></div></div>
+<h4>Figures</h4><div class="row"><div><label for="cap" title="Distances at or above this get the brightest color.">Color scale maximum (&Aring;)</label><input type="text" id="cap" value="10"></div>
+<div><label for="vw">View</label><select id="vw"><option value="0">Automatic</option><option value="1">Turn 90&deg; vertical</option><option value="2">Turn 90&deg; horizontal</option></select></div></div>
+<div class="row"><div><label for="fo" title="Reference residues to look at closely; the rest is drawn faded.">Zoom on residues</label><input type="text" id="fo" placeholder="Whole protein"></div>
+<div><label for="mk" title="Reference residues drawn as green spheres. Filled in from your variants in step 1.">Mark residues</label><input type="text" id="mk" placeholder="None"></div></div>
+<label style="font-weight:400"><input type="checkbox" id="npl"> Skip the confidence figure</label>
+<h4>Settings file</h4><div class="tools"><button class="sec" id="saveSet">Save</button><label class="sec" style="display:inline-block;font-weight:400;cursor:pointer;margin:0;padding:8px 16px;border:1px solid var(--acc);border-radius:6px;color:var(--acc)">Load<input type="file" id="loadSet" accept=".json" style="display:none"></label></div>
+</div></details>
+<div class="act"><button class="big" id="goCmp" disabled>Compare</button><span id="cmpMsg" class="msg">Choose both files.</span></div><div id="cmpErr"></div></section>
+
+<section class="panel" id="s3"><div id="res"><p class="empty">No result yet.</p></div></section>
+
+<section class="panel" id="s4"><h2>History</h2><div id="histOut"><p class="hint">Loading...</p></div><p class="hint">Kept until you close the app.</p></section>
+
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+fetch('api/version').then(r=>r.json()).then(j=>$('#ver').textContent='v'+j.version);
+setInterval(()=>fetch('api/ping',{method:'POST'}).catch(()=>{}),15000);fetch('api/ping',{method:'POST'});
+addEventListener('pagehide',()=>navigator.sendBeacon('api/bye'));
+/* main steps */
+let SEQ=null,HAVE=false,CUR=2;
+function go(n){CUR=n;document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('on',i+1===n));
+  document.querySelectorAll('#nav button').forEach((b,i)=>{b.classList.toggle('on',i+1===n);b.classList.toggle('done',i+1!==n&&((i===0&&!!SEQ)||(i===2&&HAVE)))});
+  $('#nav [data-n="3"]').disabled=!HAVE;scrollTo(0,0)}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(+b.dataset.n));
+/* step 1 */
+const copyBtn=id=>`<button class="sec" onclick="navigator.clipboard.writeText(document.getElementById('${id}').textContent);this.textContent='Copied'">Copy</button>`;
+$('#goSeq').onclick=async()=>{
+  $('#seqErr').innerHTML='';$('#seqOut').innerHTML='';
+  const t0=Date.now(),tick=setInterval(()=>{$('#seqMsg').textContent=`Looking up... ${Math.round((Date.now()-t0)/1000)} s`},500);
+  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),45000);let r,j;
+  try{r=await fetch('api/sequence',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript:$('#tx').value,sequence:$('#own').value,variants:$('#vs').value})});j=await r.json()}
+  catch(e){clearInterval(tick);clearTimeout(to);$('#seqMsg').textContent='';$('#seqErr').innerHTML='<div class="err">No answer within 45 s. Check the internet connection, or paste the sequence.</div>';return}
+  clearInterval(tick);clearTimeout(to);$('#seqMsg').textContent='';
+  if(!r.ok){$('#seqErr').innerHTML=`<div class="err">${esc(j.error)}</div>`;return}
+  SEQ=j;if(j.marks)$('#mk').value=j.marks;
+  let h=`<h3>${esc(j.gene||j.accession)} <span class="hint">${esc(j.definition)}</span></h3>`;
+  j.notes.forEach(n=>h+=`<div class="note">${esc(n)}</div>`);
+  if(!j.changed)h+='<div class="note">The variants do not change the protein.</div>';
+  h+=`<div class="seqs"><div><div class="seqhead"><span>Reference &middot; ${j.reference.length} aa</span>${copyBtn('sr')}</div><pre class="seq" id="sr">${j.reference}</pre></div>
+  <div><div class="seqhead"><span>Case &middot; ${j.case.length} aa</span>${copyBtn('sc')}</div><pre class="seq" id="sc">${j.case}</pre></div></div>
+  <div class="act"><span class="msg">Run both as separate jobs on AlphaFold Server, then download the two zips (or use any .cif or .pdb files).</span><button id="toCmp">Next: Compare</button></div>`;
+  $('#seqOut').innerHTML=h;$('#toCmp').onclick=()=>go(2);go(1)};
+/* settings */
+let VIEW={yaw:0,pitch:0,zoom:1};
+const FIELDS=['ch','fr','fo','plddt','cut','cap','pair','vw','mk','npl','tx','vs'];
+const val=id=>{const e=$('#'+id);return e.type==='checkbox'?e.checked:e.value};
+const setVal=(id,v)=>{const e=$('#'+id);if(!e||v==null)return;if(e.type==='checkbox')e.checked=!!v;else e.value=v};
+const params=extra=>Object.assign({chains:val('ch'),fit_region:val('fr'),focus:val('fo'),min_plddt:val('plddt'),cutoff:val('cut'),cap:val('cap'),pairing:val('pair'),view:val('vw'),mark:val('mk'),plddt:val('npl')?'0':'1',yaw:VIEW.yaw,pitch:VIEW.pitch,zoom:VIEW.zoom},extra||{});
+function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=name;a.click()}
+$('#saveSet').onclick=()=>{const o={};FIELDS.forEach(k=>o[k]=val(k));o.view3d=VIEW;dl('psplot_settings.json',JSON.stringify(o,null,1))};
+$('#loadSet').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());FIELDS.forEach(k=>setVal(k,o[k]));if(o.view3d)VIEW=o.view3d}catch(_){$('#cmpErr').innerHTML='<div class="err">That is not a settings file.</div>'}};
+/* reset everything */
+$('#resetAll').onclick=async()=>{
+  if(!confirm('Delete all comparisons and results, clear the form, and start clean?'))return;
+  try{const r=await fetch('api/reset',{method:'POST'});if(!r.ok){const j=await r.json();alert(j.error||'Reset failed.');return}}
+  catch(_){alert('Reset failed.');return}
+  history.replaceState(null,'',location.pathname);location.reload()};
+/* step 2: files */
+const isPae=f=>/\.(json|npy|npz|pkl)$/i.test(f.name);
+const stem=n=>n.replace(/\.[^.]+$/,'');
+const common=(a,b)=>{let k=0;while(k<a.length&&k<b.length&&a[k]===b[k])k++;return k};
+function groups(fs){const S=fs.filter(f=>!isPae(f)),P=fs.filter(isPae);
+  return S.map(a=>{let p=null;if(S.length===1&&P.length===1)p=P[0];else{let best=5;P.forEach(x=>{const c=common(stem(a.name),stem(x.name));if(c>best){best=c;p=x}})}return{s:a,p}})}
+const side=id=>groups([...$('#'+id).files]);
+function label(g){return g.map(x=>x.s.name+(x.p?' + '+x.p.name:'')).join(', ')}
+function refreshFiles(){const r=side('rz'),c=side('cz');
+  $('#n1').textContent=r.length?label(r.slice(0,1)):'Drop or click';$('#dz1').classList.toggle('has',!!r.length);
+  $('#n2').textContent=c.length?label(c):'Drop or click (one or more)';$('#dz2').classList.toggle('has',!!c.length);
+  const ok=r.length&&c.length;$('#goCmp').disabled=!ok;
+  $('#cmpMsg').textContent=ok?(c.length>1?`${c.length} cases, one reference.`:'Ready.'):(!r.length&&!c.length?'Choose both files.':!r.length?'Choose the reference file.':'Choose the case file.')}
+['rz','cz'].forEach(id=>$('#'+id).onchange=refreshFiles);
+[['dz1','rz'],['dz2','cz']].forEach(([z,i])=>{const el=$('#'+z);
+  el.ondragover=e=>{e.preventDefault();el.classList.add('over')};el.ondragleave=()=>el.classList.remove('over');
+  el.ondrop=e=>{e.preventDefault();el.classList.remove('over');const fs=[...e.dataTransfer.files].filter(f=>/\.(zip|cif|mmcif|pdb|ent|json|npy|npz|pkl)$/i.test(f.name));if(!fs.length)return;
+    const dt=new DataTransfer();fs.forEach(f=>dt.items.add(f));$('#'+i).files=dt.files;refreshFiles()}});
+addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>e.preventDefault());
+$('#goCmp').onclick=()=>runAll();
+/* step 2: run */
+const post=fd=>fetch('api/compare',{method:'POST',body:fd}).then(async r=>{const j=await r.json();if(!r.ok)throw new Error(j.error);return j.job});
+const wait=(id,label)=>new Promise((ok,bad)=>{const t0=Date.now();const iv=setInterval(async()=>{const s=await (await fetch('api/job/'+id)).json();$('#cmpMsg').textContent=`${label} ${Math.round((Date.now()-t0)/1000)} s`;if(s.status==='done'){clearInterval(iv);ok(s.summary)}else if(s.status==='error'){clearInterval(iv);bad(new Error(s.error))}},150)});
+async function runAll(){
+  $('#cmpErr').innerHTML='';const rz=side('rz')[0],cz=side('cz');
+  if(!rz||!cz.length)return;
+  $('#goCmp').disabled=true;$('#goCmp').textContent='Working...';const out=[];let refJob='';
+  try{for(let i=0;i<cz.length;i++){
+    const fd=new FormData();Object.entries(params()).forEach(([k,v])=>fd.append(k,v));
+    const put=(k,g)=>{fd.append(k+'_zip',g.s);fd.append(k+'_name',g.s.name);if(g.p)fd.append(k+'_pae',g.p)};
+    if(refJob)fd.append('ref_from',refJob);else put('ref',rz);put('case',cz[i]);
+    const id=await post(fd);if(!refJob)refJob=id;
+    const S=await wait(id,`Case ${i+1} of ${cz.length}...`);out.push({id,S})}
+  }catch(e){fail(e.message);if(!out.length)return}
+  showAll(out)}
+async function rerun(id,extra){
+  $('#cmpErr').innerHTML='';
+  try{const fd=new FormData();Object.entries(params(extra)).forEach(([k,v])=>fd.append(k,v));fd.append('from_job',id);
+    $('#res').insertAdjacentHTML('afterbegin','<div class="note" id="redraw">Redrawing...</div>');
+    const nid=await post(fd);const S=await wait(nid,'Redrawing...');showAll([{id:nid,S}])}catch(e){$('#redraw')&&$('#redraw').remove();fail(e.message)}}
+function fail(m){go(2);$('#goCmp').disabled=false;$('#goCmp').textContent='Compare';refreshFiles();$('#cmpMsg').textContent='';$('#cmpErr').innerHTML=`<div class="err">${esc(m)}</div>`}
+/* step 3: results */
+const f2=x=>x==null?'-':(+x).toFixed(2);
+const ssw=c=>c==='H'?'helix':c==='E'?'strand':'loop';
+function verdict(S){const s=S.stats;
+  const level=s.rmsd_all_aligned<2?'very similar to':s.rmsd_all_aligned<4?'slightly different from':'clearly different from';
+  return `The case is <b>${level}</b> the reference. Check the noise level under Quality.`}
+function showAll(L){
+  $('#goCmp').textContent='Compare';refreshFiles();$('#cmpMsg').textContent='';
+  let h='';
+  if(L.length>1){h+=`<h2>Results</h2><div class="cases">${L.map((x,i)=>`<button class="${i?'':'on'}" onclick="pick('${x.id}',this)">${esc(x.S.case)}</button>`).join('')}</div>
+  <table><tr><th>Case</th><th>RMSD (&Aring;)</th><th>Median (&Aring;)</th><th>&gt; 5 &Aring;</th><th>lDDT</th></tr>${L.map(x=>`<tr><td>${esc(x.S.case)}</td><td>${f2(x.S.stats.rmsd_all_aligned)}</td><td>${f2(x.S.stats.median_distance)}</td><td>${(100*x.S.stats.fraction_over_5a).toFixed(0)}%</td><td>${f2(x.S.stats.lddt_ca)}</td></tr>`).join('')}</table>`}
+  h+=L.map((x,i)=>caseHtml(x.id,x.S,i===0)).join('');
+  $('#res').innerHTML=h;HAVE=true;go(3);L.forEach(x=>initViewer(x.id));loadHist()}
+function pick(id,btn){document.querySelectorAll('.cases button').forEach(b=>b.classList.toggle('on',b===btn));document.querySelectorAll('.case').forEach(c=>c.classList.toggle('on',c.id==='c'+id))}
+function sub(id,n){document.querySelectorAll(`#c${id} .subtabs button`).forEach((b,i)=>b.classList.toggle('on',i===n));document.querySelectorAll(`#c${id} .pane`).forEach((p,i)=>p.classList.toggle('on',i===n));if(n===2&&window['draw_'+id])window['draw_'+id]()}
+function caseHtml(id,S,first){
+  const s=S.stats,pct=x=>(100*x).toFixed(0)+'%';
+  const figs=[['overlay','Reference and case'],['distance_map','Distance to reference'],['confidence_map','Case confidence (pLDDT)'],['distance_profile','Distance along the sequence']].filter(f=>f[0]!=='confidence_map'||S.has_plddt!==false);
+  return `<div class="case${first?' on':''}" id="c${id}"><h3 style="margin-top:6px">${esc(S.case)}</h3>
+  <div class="tiles"><div class="tile"><b>${f2(s.rmsd_all_aligned)} &Aring;</b><span>RMSD</span></div><div class="tile"><b>${f2(s.median_distance)} &Aring;</b><span>median shift</span></div>
+  <div class="tile"><b>${pct(s.fraction_over_5a)}</b><span>moved over 5 &Aring;</span></div><div class="tile"><b>${f2(s.lddt_ca)}</b><span>lDDT (1 = identical)</span></div></div>
+  <div class="verdict">${verdict(S)}</div>
+  <div class="subtabs"><button class="on" onclick="sub('${id}',0)">Figures</button><button onclick="sub('${id}',1)">Regions</button><button onclick="sub('${id}',2)">Rotate</button><button onclick="sub('${id}',3)">Residues</button><button onclick="sub('${id}',4)">Quality</button></div>
+  <div class="pane on"><div class="figs">${figs.map(f=>`<figure><img src="runs/${id}/${f[0]}.jpeg" alt="${f[1]}"><figcaption>${f[1]}</figcaption><a href="runs/${id}/${f[0]}.jpeg" download="${f[0]}.jpeg"><button class="sec">Download JPEG</button></a></figure>`).join('')}</div>
+  <div class="act"><a href="runs/${id}/residue_distances.csv" download><button class="sec">Distance table (CSV)</button></a></div>
+  <details><summary>Summary</summary><ul>${S.plain.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></details></div>
+  <div class="pane"><table><tr><th>Reference</th><th>Case</th><th>Residues</th><th>RMSD alone (&Aring;)</th><th>RMSD now (&Aring;)</th><th></th></tr>
+  ${S.blocks.map(b=>`<tr><td>${b.ref_start}-${b.ref_end}</td><td>${b.case_start}-${b.case_end}</td><td>${b.n}</td><td>${f2(b.rmsd_local_fit)}</td><td>${f2(b.rmsd_global_fit)}</td><td><button class="sec" onclick="$('#fr').value='${b.ref_start}-${b.ref_end}';rerun('${id}',{fit_region:'${b.ref_start}-${b.ref_end}'})">Align on this</button></td></tr>`).join('')}</table>
+  <div class="act"><button class="sec" onclick="$('#fr').value='';rerun('${id}',{fit_region:''})">Automatic alignment</button></div></div>
+  <div class="pane"><div class="tools"><select id="vk${id}"><option value="overlay">Reference and case</option><option value="distance">Distance</option><option value="plddt">Confidence</option></select>
+  <button class="sec" onclick="viewReset('${id}')">Reset</button><button class="sec" onclick="dlView('${id}')">Download JPEG</button><button class="sec" onclick="rerun('${id}',{})">Use in figures</button><span class="msg">Drag to rotate, scroll to zoom.</span></div>
+  <div class="viewer" id="vw${id}"><img id="vi${id}" width="640" alt="structure"></div></div>
+  <div class="pane">${S.marked&&S.marked.length?`<h4>Marked residues</h4><table><tr><th>Reference</th><th>Case</th><th>Moved (&Aring;)</th><th>lDDT</th><th>pLDDT ref / case</th><th></th></tr>${S.marked.map(m=>`<tr><td>${m.ref_aa}${m.ref_resi}</td><td>${m.case_aa?m.case_aa+m.case_resi:'-'}</td><td>${f2(m.distance)}</td><td>${f2(m.lddt_ca)}</td><td>${m.ref_plddt.toFixed(0)} / ${m.case_plddt==null?'-':m.case_plddt.toFixed(0)}</td><td>${esc(m.note)}</td></tr>`).join('')}</table>`:'<p class="hint">No residues marked (Options in step 2).</p>'}
+  ${S.ss_changes&&S.ss_changes.length?`<h4>Helix and strand changes</h4><table><tr><th>Reference</th><th>Reference</th><th>Case</th></tr>${S.ss_changes.map(c=>`<tr><td>${c.ref_start}-${c.ref_end}</td><td>${ssw(c.from)}</td><td>${ssw(c.to)}</td></tr>`).join('')}</table>`:'<p class="hint">No helix or strand changed.</p>'}</div>
+  <div class="pane"><table><tr><th></th><th>Reference</th><th>Case</th></tr>
+  <tr><td>Ranking score</td><td>${f2(s.ref_ranking_score)}</td><td>${f2(s.case_ranking_score)}</td></tr>
+  <tr><td>pTM</td><td>${f2(s.ref_ptm)}</td><td>${f2(s.case_ptm)}</td></tr>
+  <tr><td>Mean pLDDT</td><td>${f2(s.ref_mean_plddt)}</td><td>${f2(s.case_mean_plddt)}</td></tr></table>
+  <h4>Noise between AlphaFold's own models</h4><p class="hint">A difference counts only if it is clearly larger than these.</p>
+  <table><tr><th>Comparison</th><th>RMSD (&Aring;)</th><th>Median (&Aring;)</th></tr>
+  ${S.robustness.map(r=>`<tr><td>${esc(r.comparison)}</td><td>${f2(r.rmsd_all_aligned)}</td><td>${f2(r.median_distance)}</td></tr>`).join('')}</table></div></div>`}
+/* rotating view */
+function initViewer(id){
+  const img=$('#vi'+id),box=$('#vw'+id),sel=$('#vk'+id);if(!img)return;let drag=null,pending=false;
+  const draw=()=>{if(pending)return;pending=true;box.classList.add('busy');
+    const u=`api/view?job=${id}&kind=${sel.value}&yaw=${VIEW.yaw}&pitch=${VIEW.pitch}&zoom=${VIEW.zoom}&t=${Date.now()}`;
+    const n=new Image();n.onload=()=>{img.src=u;pending=false;box.classList.remove('busy')};n.onerror=()=>{pending=false;box.classList.remove('busy')};n.src=u};
+  img.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY,yaw:VIEW.yaw,pitch:VIEW.pitch};img.setPointerCapture(e.pointerId);img.style.cursor='grabbing';e.preventDefault()};
+  img.onpointermove=e=>{if(!drag)return;VIEW.yaw=drag.yaw+(e.clientX-drag.x)*0.5;VIEW.pitch=Math.max(-90,Math.min(90,drag.pitch+(e.clientY-drag.y)*0.5));draw()};
+  img.onpointerup=()=>{drag=null;img.style.cursor='grab';draw()};
+  img.onwheel=e=>{e.preventDefault();VIEW.zoom=Math.max(.3,Math.min(6,VIEW.zoom*(e.deltaY<0?1.1:1/1.1)));draw()};
+  sel.onchange=draw;window['draw_'+id]=draw}
+const dlView=id=>{location.href=`api/view?job=${id}&kind=${$('#vk'+id).value}&yaw=${VIEW.yaw}&pitch=${VIEW.pitch}&zoom=${VIEW.zoom}&dl=1`};
+const viewReset=id=>{VIEW={yaw:0,pitch:0,zoom:1};window['draw_'+id]()};
+/* step 4: history */
+async function loadHist(){try{const L=await (await fetch('api/history')).json();
+  $('#histOut').innerHTML=L.length?`<table><tr><th>Time</th><th>Reference</th><th>Case</th><th>RMSD (&Aring;)</th><th></th></tr>${L.map(x=>`<tr><td>${new Date(x.time*1000).toLocaleTimeString()}</td><td>${esc(x.reference)}</td><td>${esc(x.case)}</td><td>${f2(x.rmsd_all)}</td><td><button class="sec" onclick="openRun('${x.id}')">Open</button></td></tr>`).join('')}</table>`:'<p class="hint">Nothing yet.</p>'}catch(_){}}
+async function openRun(id){const s=await (await fetch('api/job/'+id)).json();if(s.status!=='done')return;
+  if(s.params)Object.entries({fit_region:'fr',focus:'fo',min_plddt:'plddt',chains:'ch',cutoff:'cut',cap:'cap',pairing:'pair',view:'vw',mark:'mk'}).forEach(([k,e])=>setVal(e,s.params[k]));
+  showAll([{id,S:s.summary}])}
+loadHist();go(2);
+if(location.hash.startsWith('#run='))openRun(location.hash.slice(5));
+else if(/^#[124]$/.test(location.hash))go(+location.hash.slice(1));
+</script></body></html>

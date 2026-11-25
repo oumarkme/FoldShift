@@ -1,0 +1,29 @@
+title: FoldShift
+description: Compare predicted protein structures of a reference and a case.
+theme: minima
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-relative-links
+  - jekyll-titles-from-headings
+  - jekyll-default-layout
+header_pages:
+  - docs/EXAMPLES.md
+  - docs/SERVER.md
+  - docs/METHODS.md
+relative_links:
+  enabled: true
+  collection: false
+exclude:
+  - crates
+  - container
+  - dist
+  - scripts
+  - test
+  - example
+  - examples
+  - Cargo.toml
+  - Cargo.lock
+  - Dockerfile
+  - rust-toolchain.toml
+  - THIRD_PARTY_NOTICES.md

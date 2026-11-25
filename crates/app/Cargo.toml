@@ -1,0 +1,28 @@
+[package]
+name = "psplot"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "FoldShift: local app to prepare AlphaFold inputs and compare two predicted structures"
+default-run = "FoldShift"
+
+[[bin]]
+name = "FoldShift"
+path = "src/main.rs"
+
+[dependencies]
+psplot_core = { path = "../core" }
+psplot_render = { path = "../render" }
+tiny_http = "0.12"
+serde_json = "1"
+open = "5"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+# Optional native window (Windows: WebView2, macOS: WKWebView). Off by default: the page then opens in the browser.
+[features]
+window = ["dep:wry", "dep:tao"]
+
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+wry = { version = "0.57", optional = true }
+tao = { version = "0.37", optional = true }

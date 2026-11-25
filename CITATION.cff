@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use FoldShift, please cite it as below."
+title: "FoldShift"
+abstract: "A stand-alone app that prepares reference and case protein sequences for AlphaFold Server and compares two predicted or experimental protein structures."
+type: software
+version: 0.5.2
+date-released: 2026-11-25
+license: MIT
+repository-code: "https://github.com/oumarkme/FoldShift"
+authors:
+  - family-names: Ou
+    given-names: Jen-Hsiang
+    email: oumark.me@outlook.com
+    affiliation: "Department of Medical Genetics, National Taiwan University Hospital"
+keywords:
+  - protein structure
+  - AlphaFold
+  - variant
+  - structure comparison

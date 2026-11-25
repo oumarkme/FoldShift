@@ -1,0 +1,7 @@
+# One fixed Rust version for local builds and CI, so a new Rust release cannot break the build
+# with new lints. To upgrade: change the version, run fmt, clippy, and the tests, fix what the
+# new version reports, and commit both together.
+[toolchain]
+channel = "1.100.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
