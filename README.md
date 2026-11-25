@@ -1,6 +1,7 @@
 # FoldShift
 
 [![Release](https://img.shields.io/badge/release-v0.5.3-0072B2)](https://github.com/oumarkme/FoldShift/releases)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24522814.svg)](https://doi.org/10.5281/zenodo.24522814)
 [![License: MIT](https://img.shields.io/badge/license-MIT-009E73)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20x64%20%7C%20Windows%20ARM64%20%7C%20macOS%20ARM64-555555)](https://github.com/oumarkme/FoldShift/releases)
 [![Build](https://github.com/oumarkme/FoldShift/actions/workflows/release.yml/badge.svg)](https://github.com/oumarkme/FoldShift/actions/workflows/release.yml)
