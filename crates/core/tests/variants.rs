@@ -41,6 +41,9 @@ fn start_loss_uses_next_met() {
 #[test]
 fn missense_and_errors() {
     let t = tx();
+    // the example of the page: c.179G>A changes codon 60, GGC (Gly) to GAC (Asp)
+    let r = apply_variants(&t, &v(&["c.179G>A"])).unwrap();
+    assert_eq!(r.protein.as_bytes()[59], b'D');
     let r = apply_variants(&t, &v(&["p.Arg32Gln"])).unwrap();
     assert_eq!(r.protein.as_bytes()[31], b'Q');
     assert!(apply_variants(&t, &v(&["c.5A>G"]))

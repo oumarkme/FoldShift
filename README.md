@@ -27,7 +27,7 @@ The page has four tabs. Work from left to right. **Reset all** (top right) delet
 ![Sequences tab: transcript or protein ID and the variants of the case](docs/img/foldshift_1_sequences.png)
 
 - Enter a RefSeq transcript (`NM_000558.5`), an Ensembl transcript (`ENST00000320868.9`), or a UniProt accession (`P69905`; protein variants only). You can paste a DNA or protein sequence instead.
-- Enter the case variants: `c.166_186del`, `c.1A>G`, or `p.Val56_Lys62del`.
+- Enter the case variants: `c.179G>A`, `c.1A>G`, or `p.Val56_Lys62del`.
 - Copy the reference and case proteins into AlphaFold Server and run them as two jobs. Download both result zips and do not unzip them.
 - Not supported yet: intron or untranslated region (UTR) positions, protein frameshifts, and gene symbols.
 
