@@ -1,20 +1,20 @@
 # FoldShift
 
-[![Release](https://img.shields.io/badge/release-v0.6.0-0072B2)](https://github.com/oumarkme/FoldShift/releases)
+[![Release](https://img.shields.io/badge/release-v0.6.1-0072B2)](https://github.com/oumarkme/FoldShift/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24522813.svg)](https://doi.org/10.5281/zenodo.24522813)
 [![License: MIT](https://img.shields.io/badge/license-MIT-009E73)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20x64%20%7C%20Windows%20ARM64%20%7C%20macOS%20ARM64-555555)](https://github.com/oumarkme/FoldShift/releases)
 [![Build](https://github.com/oumarkme/FoldShift/actions/workflows/release.yml/badge.svg)](https://github.com/oumarkme/FoldShift/actions/workflows/release.yml)
 
-**See what a variant does to a predicted protein structure.** Version 0.6.0 · MIT license · Status: stable for daily use, Windows exe tested; macOS build and native window not tested yet.
+**See what a variant does to a predicted protein structure.** Version 0.6.1 · MIT license · Status: stable for daily use, Windows exe tested; macOS build and native window not tested yet.
 
-FoldShift compares two predicted structures of the same protein, a reference and a case (for example a patient variant). It lines them up, measures how far each residue moved, and draws four figures ready for a paper (88 mm wide, 600 dpi JPEG). It also prepares the reference and case protein sequences you paste into AlphaFold Server. It never predicts structures itself.
+FoldShift compares two predicted structures of the same protein, a reference and a case (for example a patient variant). It lines them up, measures how far each residue moved, and draws four figures ready for a paper (88 mm wide, 300 dpi JPEG). It also prepares the reference and case protein sequences you paste into AlphaFold Server. It never predicts structures itself.
 
 It is for clinical geneticists and biologists who need a quick answer without installing Python, PyMOL, or ChimeraX. It is one small program with a browser page: no installation, no account, no command line.
 
 ## Get started
 
-1. **Download** the program from the Releases page: `FoldShift_v0.6.0_windows_x64.exe` for Windows (a macOS Apple Silicon build is made by the GitHub workflow). No other software is needed.
+1. **Download** the program from the Releases page: `FoldShift_v0.6.1_windows_x64.exe` for Windows (a macOS Apple Silicon build is made by the GitHub workflow). No other software is needed.
 2. **Double-click it.** Your browser opens the FoldShift page. Windows SmartScreen or macOS Gatekeeper may warn on first start because the program is unsigned; choose "Run anyway".
 3. **Try it with the sample files** in the `test/data/` folder of the repository (open data, see `test/data/README.md`): open the **Compare** tab, drop `fold_hba_reference.zip` in **Reference** and `fold_hba_case.zip` in **Case** (human HBA1 and its variant `c.179G>A`, p.Gly60Asp), and press **Compare**. The result opens in about a second: RMSD 0.23 Å, median shift 0.14 Å, no residue moved over 5 Å, lDDT 0.99. The one substitution (Gly60Asp) barely moves the backbone, so the page reports that the case is very similar to the reference.
 4. **Close the browser tab** to quit. Your comparison history is deleted when the program closes.

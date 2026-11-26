@@ -141,4 +141,4 @@ Files: `6BDD.pdb`, `6BDE.pdb`. Chains: not needed (one chain each). Mark residue
 | 7 | none | automatic | none | `99` |
 | 8 | none | automatic | none | `71` |
 
-Figures are the 88 mm, 600 dpi JPEG files of the app, reduced for this page.
+Figures are the 88 mm JPEG files of the app, reduced for this page.

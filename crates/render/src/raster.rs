@@ -172,6 +172,15 @@ impl Look {
     }
 }
 
+/// First and last pixel row (inclusive) that a triangle can touch in a picture of `h` rows.
+/// The range is empty (first > last) when the triangle starts below the picture.
+fn row_range(t: &Tri, h: usize) -> (usize, usize) {
+    let [a, b, c] = [t.v[0].p[1], t.v[1].p[1], t.v[2].p[1]];
+    let first = a.min(b).min(c).floor().max(0.0) as usize;
+    let last = a.max(b).max(c).ceil().min(h as f32 - 1.0).max(0.0) as usize;
+    (first, last)
+}
+
 /// Draw one triangle into the rows that start at row `y0` (`depth` and `rgba` hold only those rows).
 fn raster_tri(
     look: &Look,
@@ -191,9 +200,8 @@ fn raster_tri(
     }
     let minx = a[0].min(b[0]).min(c[0]).floor().max(0.0) as usize;
     let maxx = (a[0].max(b[0]).max(c[0]).ceil().min(w as f32 - 1.0)).max(0.0) as usize;
-    let miny = (a[1].min(b[1]).min(c[1]).floor().max(0.0) as usize).max(y0);
-    let maxy = (a[1].max(b[1]).max(c[1]).ceil().min(h as f32 - 1.0)).max(0.0) as usize;
-    let maxy = maxy.min(y0 + rows - 1);
+    let (first, last) = row_range(t, h);
+    let (miny, maxy) = (first.max(y0), last.min(y0 + rows - 1));
     if miny > maxy {
         return;
     }
@@ -277,8 +285,8 @@ impl Frame {
     }
 
     /// Draw many triangles in the given order. The picture is cut into bands of rows that are drawn on
-    /// separate threads; every band sees all triangles in the same order, so each pixel gets exactly the
-    /// result of drawing them one after the other.
+    /// separate threads; every band gets the triangles that reach its rows, in the same order, so each
+    /// pixel gets exactly the result of drawing them one after the other.
     pub fn tris(&mut self, list: &[Tri]) {
         let (w, h, look) = (self.w, self.h, self.look());
         let threads = std::thread::available_parallelism()
@@ -291,6 +299,16 @@ impl Frame {
             return;
         }
         let per = h.div_ceil(threads * 8).max(4);
+        // Sort the triangles into bands once, so that no band has to test the whole list.
+        let mut bins: Vec<Vec<&Tri>> = vec![Vec::new(); h.div_ceil(per)];
+        for t in list {
+            let (first, last) = row_range(t, h);
+            if first <= last {
+                for bin in &mut bins[first / per..=last / per] {
+                    bin.push(t);
+                }
+            }
+        }
         let queue = std::sync::Mutex::new(
             self.depth
                 .chunks_mut(per * w)
@@ -304,7 +322,7 @@ impl Frame {
                     let Some((b, (depth, rgba))) = next else {
                         break;
                     };
-                    for t in list {
+                    for t in &bins[b] {
                         raster_tri(&look, w, h, b * per, depth, rgba, t);
                     }
                 });
@@ -481,7 +499,8 @@ mod tests {
         let (w, h) = (300usize, 260usize);
         let list: Vec<Tri> = (0..6000)
             .map(|k| {
-                let c = [rnd() * w as f32, rnd() * h as f32];
+                // some triangles lie partly or wholly above or below the picture
+                let c = [rnd() * w as f32, rnd() * (h + 80) as f32 - 40.0];
                 let vert = |r: &mut dyn FnMut() -> f32| Vert {
                     p: [
                         c[0] + r() * 40.0 - 20.0,

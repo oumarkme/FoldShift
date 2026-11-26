@@ -8,7 +8,7 @@ use ab_glyph::{point, Font, FontRef, PxScale, ScaleFont};
 use psplot_core::compare::Comparison;
 
 /// Resolution of the downloadable figures and of the on-screen preview.
-pub const PRINT_DPI: f32 = 600.0;
+pub const PRINT_DPI: f32 = 300.0;
 pub const PREVIEW_DPI: f32 = 300.0;
 const DPI: f32 = 300.0;
 thread_local! { static KF: std::cell::Cell<f32> = const { std::cell::Cell::new(1.0) }; }

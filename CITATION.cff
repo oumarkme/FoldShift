@@ -3,9 +3,9 @@ message: "If you use FoldShift, please cite it as below."
 title: "FoldShift"
 abstract: "A stand-alone app that prepares reference and case protein sequences for AlphaFold Server and compares two predicted or experimental protein structures."
 type: software
-version: 0.6.0
+version: 0.6.1
 doi: 10.5281/zenodo.24522813
-date-released: 2026-11-25
+date-released: 2026-11-26
 license: MIT
 repository-code: "https://github.com/oumarkme/FoldShift"
 authors:

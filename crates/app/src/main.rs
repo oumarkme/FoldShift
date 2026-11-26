@@ -582,7 +582,7 @@ fn history(st: &State) -> Value {
 
 fn outputs(dir: &Path, c: &Comparison, p: &Params) -> Result<(), String> {
     // one stand-alone 88 mm JPEG per figure at PRINT_DPI; the figures are drawn at the same time
-    // (a 600 dpi frame needs about 100 MB), each on its own thread
+    // (a frame needs about 100 MB while it is drawn), each on its own thread
     let mut kinds = vec![("overlay", Kind::Overlay), ("distance_map", Kind::Distance)];
     if p.style.plddt_panel && c.ref_model.has_conf && c.case_model.has_conf {
         kinds.push(("confidence_map", Kind::Plddt));
