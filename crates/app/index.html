@@ -47,7 +47,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
 .figs img{max-width:100%;display:block}.figs figcaption{font-size:13px;color:var(--mute)}
 .cases{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.cases button{background:#fff;color:var(--ink);border-color:var(--line)}.cases button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .case{display:none}.case.on{display:block}
-.viewer{position:relative;display:inline-block;max-width:100%;border:1px solid var(--line);border-radius:6px}.viewer img{display:block;cursor:grab;user-select:none;-webkit-user-drag:none;max-width:100%}
+.viewer{position:relative;display:inline-block;max-width:100%;border:1px solid var(--line);border-radius:6px}.viewer img{display:block;cursor:grab;user-select:none;-webkit-user-drag:none;touch-action:none;width:min(640px,calc(100vw - 84px),max(360px,72vh));max-width:100%}
 .viewer.busy::after{content:'drawing...';position:absolute;top:6px;right:8px;color:var(--mute);font-size:12px}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.tools select{width:auto}
 .empty{color:var(--mute);padding:24px 0;text-align:center}
@@ -120,14 +120,15 @@ $('#goSeq').onclick=async()=>{
   <div class="act"><span class="msg">Run both as separate jobs on AlphaFold Server, then download the two zips (or use any .cif or .pdb files).</span><button id="toCmp">Next: Compare</button></div>`;
   $('#seqOut').innerHTML=h;$('#toCmp').onclick=()=>go(2);go(1)};
 /* settings */
-let VIEW={yaw:0,pitch:0,zoom:1};
+const HOME_VIEW={yaw:0,pitch:0,roll:0,zoom:1};
+let VIEW={...HOME_VIEW};
 const FIELDS=['ch','fr','fo','plddt','cut','cap','pair','vw','mk','npl','tx','vs'];
 const val=id=>{const e=$('#'+id);return e.type==='checkbox'?e.checked:e.value};
 const setVal=(id,v)=>{const e=$('#'+id);if(!e||v==null)return;if(e.type==='checkbox')e.checked=!!v;else e.value=v};
-const params=extra=>Object.assign({chains:val('ch'),fit_region:val('fr'),focus:val('fo'),min_plddt:val('plddt'),cutoff:val('cut'),cap:val('cap'),pairing:val('pair'),view:val('vw'),mark:val('mk'),plddt:val('npl')?'0':'1',yaw:VIEW.yaw,pitch:VIEW.pitch,zoom:VIEW.zoom},extra||{});
+const params=extra=>Object.assign({chains:val('ch'),fit_region:val('fr'),focus:val('fo'),min_plddt:val('plddt'),cutoff:val('cut'),cap:val('cap'),pairing:val('pair'),view:val('vw'),mark:val('mk'),plddt:val('npl')?'0':'1',...VIEW},extra||{});
 function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=name;a.click()}
 $('#saveSet').onclick=()=>{const o={};FIELDS.forEach(k=>o[k]=val(k));o.view3d=VIEW;dl('psplot_settings.json',JSON.stringify(o,null,1))};
-$('#loadSet').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());FIELDS.forEach(k=>setVal(k,o[k]));if(o.view3d)VIEW=o.view3d}catch(_){$('#cmpErr').innerHTML='<div class="err">That is not a settings file.</div>'}};
+$('#loadSet').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());FIELDS.forEach(k=>setVal(k,o[k]));if(o.view3d)VIEW={...HOME_VIEW,...o.view3d}}catch(_){$('#cmpErr').innerHTML='<div class="err">That is not a settings file.</div>'}};
 /* reset everything */
 $('#resetAll').onclick=async()=>{
   if(!confirm('Delete all comparisons and results, clear the form, and start clean?'))return;
@@ -205,7 +206,11 @@ function caseHtml(id,S,first){
   ${S.blocks.map(b=>`<tr><td>${b.ref_start}-${b.ref_end}</td><td>${b.case_start}-${b.case_end}</td><td>${b.n}</td><td>${f2(b.rmsd_local_fit)}</td><td>${f2(b.rmsd_global_fit)}</td><td><button class="sec" onclick="$('#fr').value='${b.ref_start}-${b.ref_end}';rerun('${id}',{fit_region:'${b.ref_start}-${b.ref_end}'})">Align on this</button></td></tr>`).join('')}</table>
   <div class="act"><button class="sec" onclick="$('#fr').value='';rerun('${id}',{fit_region:''})">Automatic alignment</button></div></div>
   <div class="pane"><div class="tools"><select id="vk${id}"><option value="overlay">Reference and case</option><option value="distance">Distance</option><option value="plddt">Confidence</option></select>
-  <button class="sec" title="Zoom in" aria-label="Zoom in" onclick="viewZoom('${id}',1.25)">+</button><button class="sec" title="Zoom out" aria-label="Zoom out" onclick="viewZoom('${id}',0.8)">&minus;</button><button class="sec" onclick="viewReset('${id}')">Reset</button><button class="sec" onclick="dlView('${id}')">Download JPEG</button><button class="sec" onclick="rerun('${id}',{})">Use in figures</button><span class="msg">Drag to rotate, + and &minus; to zoom.</span></div>
+  <button class="sec" title="The starting view" onclick="viewFace('${id}',0,0)">Front</button><button class="sec" title="Turned a quarter about the vertical axis" onclick="viewFace('${id}',-90,0)">Side</button><button class="sec" title="Seen from above" onclick="viewFace('${id}',0,-90)">Top</button>
+  <button class="sec" title="Roll counterclockwise" aria-label="Roll counterclockwise" onclick="viewRoll('${id}',15)">&#8634;</button><button class="sec" title="Roll clockwise" aria-label="Roll clockwise" onclick="viewRoll('${id}',-15)">&#8635;</button>
+  <button class="sec" title="Zoom in" aria-label="Zoom in" onclick="viewZoom('${id}',1.25)">+</button><button class="sec" title="Zoom out" aria-label="Zoom out" onclick="viewZoom('${id}',0.8)">&minus;</button><button class="sec" title="Starting view and zoom" onclick="viewReset('${id}')">Reset</button>
+  <button class="sec" title="Saves this view with the empty margins cut off" onclick="dlView('${id}')">Download JPEG</button><button class="sec" title="Redraws the structure figures from this view" onclick="rerun('${id}',{})">Use in figures</button></div>
+  <div class="hint" style="margin-bottom:8px">Drag to rotate. Hold Shift and drag around the middle to roll.</div>
   <div class="viewer" id="vw${id}"><img id="vi${id}" width="640" alt="structure"></div></div>
   <div class="pane">${S.marked&&S.marked.length?`<h4>Marked residues</h4><table><tr><th>Reference</th><th>Case</th><th>Moved (&Aring;)</th><th>lDDT</th><th>pLDDT ref / case</th><th></th></tr>${S.marked.map(m=>`<tr><td>${m.ref_aa}${m.ref_resi}</td><td>${m.case_aa?m.case_aa+m.case_resi:'-'}</td><td>${f2(m.distance)}</td><td>${f2(m.lddt_ca)}</td><td>${m.ref_plddt.toFixed(0)} / ${m.case_plddt==null?'-':m.case_plddt.toFixed(0)}</td><td>${esc(m.note)}</td></tr>`).join('')}</table>`:'<p class="hint">No residues marked (Options in step 2).</p>'}
   ${S.ss_changes&&S.ss_changes.length?`<h4>Helix and strand changes</h4><table><tr><th>Reference</th><th>Reference</th><th>Case</th></tr>${S.ss_changes.map(c=>`<tr><td>${c.ref_start}-${c.ref_end}</td><td>${ssw(c.from)}</td><td>${ssw(c.to)}</td></tr>`).join('')}</table>`:'<p class="hint">No helix or strand changed.</p>'}</div>
@@ -217,74 +222,95 @@ function caseHtml(id,S,first){
   <table><tr><th>Comparison</th><th>RMSD (&Aring;)</th><th>Median (&Aring;)</th></tr>
   ${S.robustness.map(r=>`<tr><td>${esc(r.comparison)}</td><td>${f2(r.rmsd_all_aligned)}</td><td>${f2(r.median_distance)}</td></tr>`).join('')}</table></div></div>`}
 /* rotating view */
+// The orientation is stored as three angles in degrees (yaw, then pitch, then roll), the same as on the server.
+// Dragging works on the 3x3 matrix so that every drag turns about the axes of the screen, with no limit.
+const RAD=Math.PI/180;
+const mat=(a,b)=>a.map(r=>[0,1,2].map(j=>r[0]*b[0][j]+r[1]*b[1][j]+r[2]*b[2][j]));
+function turn(axis,angle){// rotation by angle (radians) about a unit axis in screen coordinates: right, up, toward you
+  const [x,y,z]=axis,c=Math.cos(angle),s=Math.sin(angle),k=1-c;
+  return [[c+x*x*k,x*y*k-z*s,x*z*k+y*s],[y*x*k+z*s,c+y*y*k,y*z*k-x*s],[z*x*k-y*s,z*y*k+x*s,c+z*z*k]]}
+function toMatrix(v){const cy=Math.cos(v.yaw*RAD),sy=Math.sin(v.yaw*RAD),cp=Math.cos(v.pitch*RAD),sp=Math.sin(v.pitch*RAD);
+  return mat(turn([0,0,1],v.roll*RAD),[[cy,0,-sy],[sp*sy,cp,sp*cy],[cp*sy,-sp,cp*cy]])}
+function toAngles(m){// the inverse of toMatrix; at pitch +-90 degrees yaw and roll share one turn, which goes to roll
+  const flat=Math.hypot(m[2][0],m[2][2]),yaw=flat<1e-6?0:Math.atan2(m[2][0],m[2][2]),pitch=Math.atan2(-m[2][1],flat);
+  const n=toMatrix({yaw:yaw/RAD,pitch:pitch/RAD,roll:0});
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  return {yaw:yaw/RAD,pitch:pitch/RAD,roll:Math.atan2(dot(m[1],n[0]),dot(m[0],n[0]))/RAD}}
+const orient=m=>{VIEW={...VIEW,...toAngles(m)}};
+const viewQuery=()=>`yaw=${VIEW.yaw}&pitch=${VIEW.pitch}&roll=${VIEW.roll}&zoom=${VIEW.zoom}`;
 function initViewer(id){
   const img=$('#vi'+id),box=$('#vw'+id),sel=$('#vk'+id);if(!img)return;let drag=null;
-  // Fast path: while the mouse is down the page turns the C-alpha trace itself (same camera as the server picture,
-  // 60 frames per second, no round trip). The sharp server picture replaces it when the mouse is released.
-  let dirty=false,data=null,dataKey='',cv=null,raf=0;
+  // Fast path: while the mouse is down the page turns the C-alpha trace itself (same square frame as the server
+  // picture, 60 frames per second, no round trip). The sharp server picture replaces it when the mouse is released.
+  let dirty=false,live=false,data=null,dataKey='',raf=0;
+  const cv=document.createElement('canvas');cv.style.cssText='position:absolute;left:0;top:0;pointer-events:none;display:none';box.appendChild(cv);
   const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-  const dotp=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
   const load=()=>{const k=sel.value;if(dataKey===k&&data)return Promise.resolve(data);
     return fetch(`api/viewdata?job=${id}&kind=${k}`).then(r=>r.json()).then(d=>{
       d.chains.forEach(c=>{c.rgb=c.col.map(hex)});data=d;dataKey=k;return d})};
-  function frame(){raf=0;if(!data||!cv)return;
+  function frame(){raf=0;if(!live||!data)return;
     const W=img.clientWidth,dpr=Math.min(2,window.devicePixelRatio||1);
-    let [x,y,z]=data.axes;const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],mul=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
-    // same rotation as the server (yaw about the vertical axis, then pitch)
-    const sy=Math.sin(VIEW.yaw*Math.PI/180),cy=Math.cos(VIEW.yaw*Math.PI/180),sp=Math.sin(VIEW.pitch*Math.PI/180),cp=Math.cos(VIEW.pitch*Math.PI/180);
-    const x2=add(mul(x,cy),mul(z,-sy)),z2=add(mul(x,sy),mul(z,cy)),y2=add(mul(y,cp),mul(z2,sp)),z3=add(mul(z2,cp),mul(y,-sp));
-    const ax=[x2,y2,z3],cen=data.center;
-    const P=[];let lo=[1e9,1e9],hi=[-1e9,-1e9];
-    data.chains.forEach(c=>{const n=c.col.length,q=new Float32Array(n*3);
-      for(let i=0;i<n;i++){const d=[c.ca[3*i]-cen[0],c.ca[3*i+1]-cen[1],c.ca[3*i+2]-cen[2]];
-        const px=dotp(ax[0],d),py=-dotp(ax[1],d);q[3*i]=px;q[3*i+1]=py;q[3*i+2]=dotp(ax[2],d);
-        if(c.framed[i]){if(px<lo[0])lo[0]=px;if(px>hi[0])hi[0]=px;if(py<lo[1])lo[1]=py;if(py>hi[1])hi[1]=py}}
-      P.push(q)});
-    const pad=3,bw=hi[0]-lo[0]+2*pad,bh=hi[1]-lo[1]+2*pad;
-    let sc=W/bw;const hpx=Math.min(W*1.5,Math.max(W/3,bh*sc));sc=Math.min(sc,hpx/bh);const fit=sc;sc*=Math.max(.1,VIEW.zoom);const o0=lo[0]-pad+(VIEW.zoom!==1?W/2*(1/fit-1/sc):0),o1=lo[1]-pad+(VIEW.zoom!==1?hpx/2*(1/fit-1/sc):0);
-    if(!cv._h)cv._h=img.clientHeight;const H=Math.max(hpx,cv._h);// cover the whole old picture, legend included
-    box.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+'px';cv.style.height=H+'px';
-    const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    // screen axes = orientation matrix times the starting axes
+    const ax=mat(toMatrix(VIEW),data.axes),cen=data.center,sc=W/(2*data.half)*VIEW.zoom;
+    const P=data.chains.map(c=>{const n=c.col.length,q=new Float32Array(n*3);
+      for(let i=0;i<n;i++){const x=c.ca[3*i]-cen[0],y=c.ca[3*i+1]-cen[1],z=c.ca[3*i+2]-cen[2];
+        q[3*i]=W/2+(ax[0][0]*x+ax[0][1]*y+ax[0][2]*z)*sc;q[3*i+1]=W/2-(ax[1][0]*x+ax[1][1]*y+ax[1][2]*z)*sc;
+        q[3*i+2]=ax[2][0]*x+ax[2][1]*y+ax[2][2]*z}
+      return q});
+    cv.width=Math.round(W*dpr);cv.height=Math.round(W*dpr);cv.style.width=W+'px';cv.style.height=W+'px';
+    const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.fillStyle='#fff';g.fillRect(0,0,W,W);// the legend below stays
     g.lineCap='round';g.lineJoin='round';
     let zlo=1e9,zhi=-1e9;P.forEach(q=>{for(let i=2;i<q.length;i+=3){if(q[i]<zlo)zlo=q[i];if(q[i]>zhi)zhi=q[i]}});
     const segs=[];
     data.chains.forEach((c,ci)=>{const q=P[ci],n=c.col.length;
       for(let i=0;i+1<n;i++){if(c.breaks[i])continue;
         segs.push({z:(q[3*i+2]+q[3*i+5])/2,c,q,i})}});
-    const draw=(list,faint)=>{list.sort((a,b)=>a.z-b.z);
+    const strokes=(list,faint)=>{list.sort((a,b)=>a.z-b.z);
       const lw=Math.max(1.4,0.55*sc);
       for(const o of list){const {c,q,i}=o,t=zhi>zlo?(o.z-zlo)/(zhi-zlo):0.5;// far = lighter
         const k=0.3*(1-t),rgb=c.rgb[i].map(v=>Math.round(v+(255-v)*k));
-        const x0=(q[3*i]-o0)*sc,y0=(q[3*i+1]-o1)*sc,x1=(q[3*i+3]-o0)*sc,y1=(q[3*i+4]-o1)*sc;
         g.globalAlpha=c.alpha[i];
-        if(!faint){g.strokeStyle='rgb(40,40,40)';g.lineWidth=lw+1.2;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke()}
-        g.strokeStyle=`rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;g.lineWidth=lw;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke()}};
-    draw(segs.filter(o=>o.c.alpha[o.i]>=1),false);draw(segs.filter(o=>o.c.alpha[o.i]<1),true);g.globalAlpha=1;
+        if(!faint){g.strokeStyle='rgb(40,40,40)';g.lineWidth=lw+1.2;g.beginPath();g.moveTo(q[3*i],q[3*i+1]);g.lineTo(q[3*i+3],q[3*i+4]);g.stroke()}
+        g.strokeStyle=`rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;g.lineWidth=lw;g.beginPath();g.moveTo(q[3*i],q[3*i+1]);g.lineTo(q[3*i+3],q[3*i+4]);g.stroke()}};
+    strokes(segs.filter(o=>o.c.alpha[o.i]>=1),false);strokes(segs.filter(o=>o.c.alpha[o.i]<1),true);g.globalAlpha=1;
     cv.style.display='block'}
-  const fast=()=>{load().then(()=>{if(!raf)raf=requestAnimationFrame(frame)}).catch(()=>{})};
-  const place=()=>{if(!cv){cv=document.createElement('canvas');cv.style.cssText='position:absolute;left:0;top:0;pointer-events:none;display:none';box.appendChild(cv)}};
-  const hide=()=>{if(cv){cv.style.display='none';cv._h=0;box.style.height=''}};
-  // sharp picture from the server; only the newest request is kept
+  const fast=()=>{live=true;load().then(()=>{if(live&&!raf)raf=requestAnimationFrame(frame)}).catch(()=>{})};
+  const hide=()=>{live=false;cv.style.display='none'};
+  // sharp picture from the server; only the newest request is kept, and none replaces the trace during a drag
   let pending=false;
   const draw=()=>{dirty=true;if(pending)return;pending=true;box.classList.add('busy');
     const next=()=>{if(!dirty){pending=false;box.classList.remove('busy');return}dirty=false;
-      const u=`api/view?job=${id}&kind=${sel.value}&yaw=${VIEW.yaw}&pitch=${VIEW.pitch}&zoom=${VIEW.zoom}&t=${Date.now()}`;
-      const n=new Image();n.onload=()=>{if(dirty){next();return}img.src=u;hide();next()};n.onerror=()=>{pending=false;dirty=false;hide();box.classList.remove('busy')};n.src=u};
+      const n=new Image();n.onload=()=>{if(dirty){next();return}if(!(drag&&drag.moved)){img.src=n.src;hide()}next()};
+      n.onerror=()=>{pending=false;dirty=false;hide();box.classList.remove('busy')};
+      n.src=`api/view?job=${id}&kind=${sel.value}&${viewQuery()}&t=${Date.now()}`};
     next()};
-  place();
-  img.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY,yaw:VIEW.yaw,pitch:VIEW.pitch};img.setPointerCapture(e.pointerId);img.style.cursor='grabbing';e.preventDefault();load().catch(()=>{})};
-  img.onpointermove=e=>{if(!drag)return;VIEW.yaw=drag.yaw-(e.clientX-drag.x)*0.5;VIEW.pitch=Math.max(-90,Math.min(90,drag.pitch-(e.clientY-drag.y)*0.5));fast()};
-  img.onpointerup=()=>{if(!drag)return;drag=null;img.style.cursor='grab';draw()};
-  window['zoom_'+id]=f=>{VIEW.zoom=Math.max(.3,Math.min(6,VIEW.zoom*f));fast();clearTimeout(img._t);img._t=setTimeout(draw,150)};
-  sel.onchange=()=>{data=null;draw()};window['draw_'+id]=()=>{draw()}}
-const dlView=id=>{location.href=`api/view?job=${id}&kind=${$('#vk'+id).value}&yaw=${VIEW.yaw}&pitch=${VIEW.pitch}&zoom=${VIEW.zoom}&dl=1`};
-const viewZoom=(id,f)=>window['zoom_'+id](f);
-const viewReset=id=>{VIEW={yaw:0,pitch:0,zoom:1};window['draw_'+id]()};
+  // angle of the pointer around the middle of the square frame, counterclockwise
+  const around=e=>{const r=img.getBoundingClientRect();return Math.atan2(r.top+r.width/2-e.clientY,e.clientX-r.left-r.width/2)};
+  img.onpointerdown=e=>{if(drag||e.button!==0)return;e.preventDefault();
+    drag={id:e.pointerId,x:e.clientX,y:e.clientY,a:around(e),m:toMatrix(VIEW),moved:false};
+    img.setPointerCapture(e.pointerId);img.style.cursor='grabbing';load().catch(()=>{})};
+  img.onpointermove=e=>{if(!drag||e.pointerId!==drag.id)return;
+    const dx=e.clientX-drag.x,dy=e.clientY-drag.y,d=Math.hypot(dx,dy),a=around(e);if(!d)return;
+    // Shift: roll with the pointer. Otherwise a drag across the whole frame turns 270 degrees.
+    const r=e.shiftKey?turn([0,0,1],a-drag.a):turn([dy/d,dx/d,0],d/img.clientWidth*270*RAD);
+    drag.m=mat(r,drag.m);Object.assign(drag,{x:e.clientX,y:e.clientY,a,moved:true});orient(drag.m);fast()};
+  const end=e=>{if(!drag||e.pointerId!==drag.id)return;const moved=drag.moved;drag=null;img.style.cursor='grab';if(moved)draw()};
+  img.onpointerup=img.onpointercancel=img.onlostpointercapture=end;
+  // a button: show the trace at once, then ask for the sharp picture after the last click
+  const step=()=>{fast();clearTimeout(img._t);img._t=setTimeout(draw,150)};
+  window['step_'+id]=step;
+  sel.onchange=()=>{data=null;hide();draw()};window['draw_'+id]=draw}
+const dlView=id=>{location.href=`api/view?job=${id}&kind=${$('#vk'+id).value}&${viewQuery()}&dl=1`};
+const viewZoom=(id,f)=>{VIEW.zoom=Math.max(1,Math.min(6,VIEW.zoom*f));window['step_'+id]()};
+const viewRoll=(id,deg)=>{orient(mat(turn([0,0,1],deg*RAD),toMatrix(VIEW)));window['step_'+id]()};
+const viewFace=(id,yaw,pitch)=>{VIEW={...VIEW,yaw,pitch,roll:0};window['step_'+id]()};
+const viewReset=id=>{VIEW={...HOME_VIEW};window['step_'+id]()};
 /* step 4: history */
 async function loadHist(){try{const L=await (await fetch('api/history')).json();
   $('#histOut').innerHTML=L.length?`<table><tr><th>Time</th><th>Reference</th><th>Case</th><th>RMSD (&Aring;)</th><th></th></tr>${L.map(x=>`<tr><td>${new Date(x.time*1000).toLocaleTimeString()}</td><td>${esc(x.reference)}</td><td>${esc(x.case)}</td><td>${f2(x.rmsd_all)}</td><td><button class="sec" onclick="openRun('${x.id}')">Open</button></td></tr>`).join('')}</table>`:'<p class="hint">Nothing yet.</p>'}catch(_){}}
 async function openRun(id){const s=await (await fetch('api/job/'+id)).json();if(s.status!=='done')return;
   if(s.params)Object.entries({fit_region:'fr',focus:'fo',min_plddt:'plddt',chains:'ch',cutoff:'cut',cap:'cap',pairing:'pair',view:'vw',mark:'mk'}).forEach(([k,e])=>setVal(e,s.params[k]));
+  if(s.params)VIEW=Object.fromEntries(Object.entries(HOME_VIEW).map(([k,d])=>[k,+(s.params[k]??d)]));
   showAll([{id,S:s.summary}])}
 loadHist();go(2);
 if(location.hash.startsWith('#run='))openRun(location.hash.slice(5));

@@ -316,7 +316,9 @@ fn parse_params(f: &HashMap<String, String>) -> Result<Params, String> {
         plddt_panel: f.get("plddt").map(|v| v.trim()) != Some("0"),
         yaw: num("yaw", 0.0)? as f32,
         pitch: num("pitch", 0.0)? as f32,
+        roll: num("roll", 0.0)? as f32,
         zoom: num("zoom", 1.0)? as f32,
+        steady: false,
     };
     Ok(Params {
         opt: Options {
@@ -467,7 +469,9 @@ fn query_param(q: &str, key: &str) -> Option<String> {
         .map(|(_, v)| v.to_string())
 }
 
-/// A picture of a finished run from any angle: `/api/view?job=..&kind=overlay|distance|plddt&w=700&yaw=..&pitch=..&zoom=..`.
+/// A picture of a finished run from any angle:
+/// `/api/view?job=..&kind=overlay|distance|plddt&yaw=..&pitch=..&roll=..&zoom=..`. The viewer gets a square frame of
+/// fixed size; with `dl` the picture is cropped like the other figures.
 fn view_response(st: &State, q: &str) -> Response<Cursor<Vec<u8>>> {
     let id = query_param(q, "job").unwrap_or_default();
     let cp = match comparison_of(st, &id) {
@@ -482,7 +486,9 @@ fn view_response(st: &State, q: &str) -> Response<Cursor<Vec<u8>>> {
     let mut style = cp.1.style.clone();
     style.yaw = f("yaw", style.yaw);
     style.pitch = f("pitch", style.pitch);
+    style.roll = f("roll", style.roll);
     style.zoom = f("zoom", style.zoom);
+    style.steady = query_param(q, "dl").is_none();
     let kind = match query_param(q, "kind").as_deref() {
         Some("distance") => Kind::Distance,
         Some("plddt") => Kind::Plddt,
@@ -537,11 +543,11 @@ fn viewdata_response(st: &State, q: &str) -> Response<Cursor<Vec<u8>>> {
             json!({
                 "ca": c.ca.iter().flat_map(|p| [r1(p[0]), r1(p[1]), r1(p[2])]).collect::<Vec<_>>(),
                 "col": c.col.iter().map(|k| format!("#{:02x}{:02x}{:02x}", k[0], k[1], k[2])).collect::<Vec<_>>(),
-                "alpha": c.alpha, "breaks": c.breaks, "framed": c.framed,
+                "alpha": c.alpha, "breaks": c.breaks,
             })
         })
         .collect();
-    let body = json!({"axes": d.axes, "center": d.center, "chains": chains, "yaw": cp.1.style.yaw, "pitch": cp.1.style.pitch});
+    let body = json!({"axes": d.axes, "center": d.center, "half": d.half, "chains": chains});
     Response::from_data(body.to_string())
         .with_status_code(200)
         .with_header(Header::from_bytes("Content-Type", "application/json").unwrap())
@@ -939,7 +945,9 @@ fn handle(st: &Arc<State>, mut req: Request) {
                     "params": serde_json::from_str::<Value>(&p).unwrap_or(Value::Null) }),
                 )
             };
-            match mem.or_else(|| if mine { disk() } else { None }) {
+            // a finished run is read from its folder, which also holds the options the page restores
+            let unfinished = mem.filter(|v| v["status"] != "done");
+            match unfinished.or_else(|| if mine { disk() } else { None }) {
                 Some(v) => json_resp(200, v),
                 None => err(404, "Unknown job."),
             }

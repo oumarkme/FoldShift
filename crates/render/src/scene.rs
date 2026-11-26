@@ -12,6 +12,8 @@ pub const JUNCTION: [u8; 3] = [0x00, 0x72, 0xB2];
 pub const MARK: [u8; 3] = [0x00, 0x9E, 0x73];
 pub const UNALIGNED: [u8; 3] = [0x75, 0x75, 0x75];
 pub const FAINT: f32 = 0.28;
+/// Empty margin around the structure in Angstrom.
+const PAD: f32 = 3.0;
 
 const VIRIDIS: [[u8; 3]; 11] = [
     [0x44, 0x01, 0x54],
@@ -59,7 +61,12 @@ pub struct Style {
     /// Rotation about the vertical axis in degrees, on top of `view` (used by the interactive viewer).
     pub yaw: f32,
     pub pitch: f32,
+    /// Rotation in the plane of the picture in degrees, counterclockwise, applied after yaw and pitch.
+    pub roll: f32,
+    /// Magnification about the middle of the structure; 1 shows all of it.
     pub zoom: f32,
+    /// Framing of the interactive viewer: a square whose size and middle do not change with the angle.
+    pub steady: bool,
 }
 
 impl Default for Style {
@@ -72,7 +79,9 @@ impl Default for Style {
             plddt_panel: true,
             yaw: 0.0,
             pitch: 0.0,
+            roll: 0.0,
             zoom: 1.0,
+            steady: false,
         }
     }
 }
@@ -166,10 +175,55 @@ pub fn camera(c: &Comparison, width: usize, st: &Style) -> Camera {
         let z3 = add(mul(z2, cp), mul(y, -sp));
         axes = [x2, y2, z3];
     }
-    fit_camera(axes, center, &pts, width, st.zoom)
+    if st.roll != 0.0 {
+        let (s, c) = st.roll.to_radians().sin_cos();
+        let (x, y) = (axes[0], axes[1]);
+        axes[0] = add(mul(x, c), mul(y, -s));
+        axes[1] = add(mul(x, s), mul(y, c));
+    }
+    if st.steady {
+        steady_camera(axes, &pts, width, st.zoom)
+    } else {
+        fit_camera(axes, center, &pts, width, st.zoom)
+    }
 }
 
-/// Axes (before yaw and pitch), center and the points that set the frame.
+/// Middle and half side (Angstrom, at zoom 1) of the square viewer frame: a ball that holds every point
+/// (Badoiu-Clarkson iteration), plus the padding. It holds the structure at every angle.
+fn view_window(pts: &[V3]) -> (V3, f32) {
+    let dist2 = |a: V3, b: V3| {
+        let d = sub(a, b);
+        dot(d, d)
+    };
+    let mut c = pts
+        .iter()
+        .fold([0.0; 3], |a, p| add(a, mul(*p, 1.0 / pts.len() as f32)));
+    for i in 1..=100 {
+        let far = pts
+            .iter()
+            .fold(c, |f, &p| if dist2(p, c) > dist2(f, c) { p } else { f });
+        c = add(c, mul(sub(far, c), 1.0 / (i as f32 + 1.0)));
+    }
+    let r2 = pts.iter().fold(0.0f32, |m, &p| m.max(dist2(p, c)));
+    (c, r2.sqrt() + PAD)
+}
+
+/// The square viewer frame: its middle stays at the picture's middle at every angle.
+fn steady_camera(axes: [V3; 3], pts: &[V3], width: usize, zoom: f32) -> Camera {
+    let (center, half) = view_window(pts);
+    let scale = width as f32 / (2.0 * half) * zoom.max(0.1);
+    let min = -(width as f32) / (2.0 * scale);
+    Camera {
+        axes,
+        center,
+        scale,
+        w: width,
+        h: width,
+        minxy: [min, min],
+    }
+}
+
+/// Axes (before yaw, pitch and roll), center and the points that set the frame.
 fn base_view(c: &Comparison, st: &Style) -> ([V3; 3], V3, Vec<V3>) {
     let in_focus = focus_mask(c, &st.focus);
     let mut pts: Vec<V3> = Vec::new();
@@ -202,33 +256,42 @@ fn base_view(c: &Comparison, st: &Style) -> ([V3; 3], V3, Vec<V3>) {
     (axes, center, pts)
 }
 
+/// Frame of a figure: cropped to the structure. With a zoom, it shows what the square viewer frame shows,
+/// with the empty margins cut off.
 fn fit_camera(axes: [V3; 3], center: V3, pts: &[V3], width: usize, zoom: f32) -> Camera {
-    let proj: Vec<[f32; 2]> = pts
-        .iter()
-        .map(|p| {
-            let d = sub(*p, center);
-            [dot(axes[0], d), -dot(axes[1], d)]
-        })
-        .collect();
+    let project = |p: V3| {
+        let d = sub(p, center);
+        [dot(axes[0], d), -dot(axes[1], d)]
+    };
     let (mut lo, mut hi) = ([f32::MAX; 2], [f32::MIN; 2]);
-    for p in &proj {
+    for &p in pts {
+        let q = project(p);
         for k in 0..2 {
-            lo[k] = lo[k].min(p[k]);
-            hi[k] = hi[k].max(p[k]);
+            lo[k] = lo[k].min(q[k]);
+            hi[k] = hi[k].max(q[k]);
         }
     }
-    let pad = 3.0;
-    let (bw, bh) = (hi[0] - lo[0] + 2.0 * pad, hi[1] - lo[1] + 2.0 * pad);
+    let (mut bw, mut bh) = (hi[0] - lo[0] + 2.0 * PAD, hi[1] - lo[1] + 2.0 * PAD);
+    let mut minxy = [lo[0] - PAD, lo[1] - PAD];
+    if zoom != 1.0 {
+        let (middle, half) = view_window(pts);
+        let (middle, half) = (project(middle), half / zoom.max(0.1));
+        let mut size = [bw, bh];
+        for k in 0..2 {
+            let start = minxy[k].max(middle[k] - half);
+            size[k] = (hi[k] + PAD).min(middle[k] + half) - start;
+            minxy[k] = start;
+        }
+        [bw, bh] = size;
+    }
     let scale = width as f32 / bw;
     let h = ((bh * scale).round() as usize).clamp(width / 3, width * 3 / 2);
     // fit height too if the clamp shrank it
-    let fit = scale.min(h as f32 / bh);
-    let scale = fit * zoom.max(0.1);
-    // a zoom keeps the middle of the frame in place (zoom 1 leaves the frame untouched)
-    let mut minxy = [lo[0] - pad, lo[1] - pad];
+    let scale = scale.min(h as f32 / bh);
+    // a zoomed frame that the height limits made larger than its content keeps the content in the middle
     if zoom != 1.0 {
-        minxy[0] += width as f32 / 2.0 * (1.0 / fit - 1.0 / scale);
-        minxy[1] += h as f32 / 2.0 * (1.0 / fit - 1.0 / scale);
+        minxy[0] -= (width as f32 / scale - bw) / 2.0;
+        minxy[1] -= (h as f32 / scale - bh) / 2.0;
     }
     Camera {
         axes,
@@ -452,11 +515,14 @@ pub fn render(c: &Comparison, cam: &Camera, kind: Kind, st: &Style) -> Image {
 }
 
 /// What the page needs to turn the structure at full frame rate while the mouse is down:
-/// the same axes, frame and colors as the server picture (drawn as a thin trace).
+/// the same axes, frame and colors as the server picture of the viewer (drawn as a thin trace).
 pub struct ViewData {
+    /// Axes before yaw, pitch and roll.
     pub axes: [V3; 3],
+    /// Middle of the square frame, and its half side in Angstrom at zoom 1.
     pub center: V3,
-    /// (C-alpha, colors, opacity, chain breaks, in the frame) for the reference, then the case.
+    pub half: f32,
+    /// The reference, then the case.
     pub chains: Vec<ViewChain>,
 }
 
@@ -465,15 +531,14 @@ pub struct ViewChain {
     pub col: Vec<[u8; 3]>,
     pub alpha: Vec<f32>,
     pub breaks: Vec<bool>,
-    pub framed: Vec<bool>,
 }
 
+/// The viewer data of one figure kind; `st` sets the starting axes and the focus, not the angle.
 pub fn view_data(c: &Comparison, kind: Kind, st: &Style) -> ViewData {
-    let (axes, center, _) = base_view(c, st);
-    let mask = focus_mask(c, &st.focus);
+    let (axes, _, pts) = base_view(c, st);
+    let (center, half) = view_window(&pts);
     let (rc, cc) = chains(c, kind, st);
-    let mk = |ch: Chain, m: Option<&Vec<bool>>| ViewChain {
-        framed: (0..ch.ca.len()).map(|i| m.is_none_or(|m| m[i])).collect(),
+    let view_chain = |ch: Chain| ViewChain {
         ca: ch.ca,
         col: ch.col,
         alpha: ch.alpha,
@@ -482,9 +547,7 @@ pub fn view_data(c: &Comparison, kind: Kind, st: &Style) -> ViewData {
     ViewData {
         axes,
         center,
-        chains: vec![
-            mk(rc, mask.as_ref().map(|m| &m.0)),
-            mk(cc, mask.as_ref().map(|m| &m.1)),
-        ],
+        half,
+        chains: vec![view_chain(rc), view_chain(cc)],
     }
 }
